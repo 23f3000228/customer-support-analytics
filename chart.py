@@ -1,41 +1,39 @@
-# Customer Analytics: Response Time Distribution by Support Channel
-# Heller Schamberger and Rau - Customer Experience Analysis
 
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from PIL import Image
+from google.colab import files
 
 print("📊 Customer Support Response Time Analysis")
 print("=" * 50)
 
 # Set professional styling
 sns.set_style("whitegrid")
-sns.set_context("talk")  # Presentation-ready text sizes
+sns.set_context("talk")
 plt.rcParams['font.family'] = 'DejaVu Sans'
 
 # Generate realistic synthetic data for customer support channels
-np.random.seed(42)  # For reproducible results
-
-# Create realistic response time distributions for different support channels
+np.random.seed(42)
 data = []
 n_observations = 500
 
-# Email Support - typically slower response times
-email_times = np.random.gamma(2.5, 2.0, n_observations) * 120  # Minutes
+# Email Support
+email_times = np.random.gamma(2.5, 2.0, n_observations) * 120
 data.extend([{'Channel': 'Email', 'Response_Time_Minutes': time} for time in email_times])
 
-# Live Chat - fast response times
-chat_times = np.random.exponential(0.8, n_observations) * 60  # Minutes
+# Live Chat
+chat_times = np.random.exponential(0.8, n_observations) * 60
 data.extend([{'Channel': 'Live Chat', 'Response_Time_Minutes': time} for time in chat_times])
 
-# Phone Support - moderate response times
-phone_times = np.random.normal(8, 3, n_observations)  # Minutes
-phone_times = np.abs(phone_times)  # Ensure positive values
+# Phone Support
+phone_times = np.random.normal(8, 3, n_observations)
+phone_times = np.abs(phone_times)
 data.extend([{'Channel': 'Phone', 'Response_Time_Minutes': time} for time in phone_times])
 
-# Social Media - variable response times
-social_times = np.random.lognormal(2.5, 0.8, n_observations)  # Minutes
+# Social Media
+social_times = np.random.lognormal(2.5, 0.8, n_observations)
 data.extend([{'Channel': 'Social Media', 'Response_Time_Minutes': time} for time in social_times])
 
 # Create DataFrame
@@ -43,60 +41,60 @@ df = pd.DataFrame(data)
 
 print("📈 Dataset Overview:")
 print(f"Total observations: {len(df)}")
-print(f"Support channels: {df['Channel'].unique().tolist()}")
-print(f"Response time range: {df['Response_Time_Minutes'].min():.1f} - {df['Response_Time_Minutes'].max():.1f} minutes")
-print("\nChannel Statistics:")
-print(df.groupby('Channel')['Response_Time_Minutes'].describe().round(2))
 
-# Create the violin plot
+# METHOD 1: Direct control with exact dimensions
 print("\n🎨 Generating professional violin plot...")
-plt.figure(figsize=(8, 8))  # Set for 512x512 output with dpi=64
 
-# Create violin plot with professional styling
-violin_plot = sns.violinplot(
+# Create figure with NO padding or margins
+fig = plt.figure(figsize=(5.12, 5.12), dpi=100, facecolor='white')
+ax = fig.add_subplot(111)
+
+# Create violin plot
+sns.violinplot(
     data=df,
     x='Channel',
     y='Response_Time_Minutes',
-    palette='viridis',  # Professional color palette
+    palette='viridis',
     saturation=0.8,
-    inner='quartile',  # Show quartiles inside violins
-    linewidth=1.5
+    inner='quartile',
+    linewidth=1.5,
+    ax=ax
 )
 
-# Customize the plot for executive presentation
-plt.title('Customer Support Response Time Distribution\nby Support Channel', 
-          fontsize=16, fontweight='bold', pad=20)
-plt.xlabel('Support Channel', fontsize=14, fontweight='bold', labelpad=15)
-plt.ylabel('Response Time (Minutes)', fontsize=14, fontweight='bold', labelpad=15)
+# Customize with smaller fonts for exact fit
+ax.set_title('Customer Support Response Time Distribution\nby Support Channel', 
+             fontsize=11, fontweight='bold', pad=15)
+ax.set_xlabel('Support Channel', fontsize=10, fontweight='bold', labelpad=10)
+ax.set_ylabel('Response Time (Minutes)', fontsize=10, fontweight='bold', labelpad=10)
 
-# Rotate x-axis labels for better readability
+# Rotate labels
 plt.xticks(rotation=45, ha='right')
 
-# Add grid for better readability
-plt.grid(True, alpha=0.3)
+# Remove all extra space
+plt.tight_layout(pad=0.5)
 
-# Remove top and right spines for cleaner look
-sns.despine(left=False, bottom=False)
+# Save with EXACT dimensions - NO extra space
+plt.savefig('chart.png', 
+            dpi=100, 
+            bbox_inches='tight',
+            pad_inches=0.02,
+            facecolor='white',
+            edgecolor='none')
 
-# Adjust layout
-plt.tight_layout()
+plt.close()
 
-# Save the chart with exact 512x512 pixel dimensions
-plt.savefig('chart.png', dpi=64, bbox_inches='tight', 
-            facecolor='white', edgecolor='none')
+# METHOD 2: Verify and resize if needed
+img = Image.open('chart.png')
+print(f"Initial size: {img.size}")
 
-print("✅ Chart saved as 'chart.png'")
-print(f"📏 Image dimensions: 512x512 pixels")
+# If not exactly 512x512, resize it
+if img.size != (512, 512):
+    print("Resizing to exact 512x512 pixels...")
+    img_resized = img.resize((512, 512), Image.Resampling.LANCZOS)
+    img_resized.save('chart.png', 'PNG')
+    print(f"Final size: {img_resized.size}")
+else:
+    print("✅ Perfect 512x512 size!")
 
-# Display some insights
-print("\n🔍 Key Business Insights:")
-print("-" * 40)
-channel_stats = df.groupby('Channel')['Response_Time_Minutes'].agg(['mean', 'median', 'std']).round(1)
-for channel in channel_stats.index:
-    stats = channel_stats.loc[channel]
-    print(f"📞 {channel}: Mean={stats['mean']}min, Median={stats['median']}min, Std={stats['std']}min")
-
-# Show the plot
-plt.show()
-
-print("\n🎯 Analysis complete! Ready for executive presentation.")
+# Download the file to your computer
+files.download('chart.png')
